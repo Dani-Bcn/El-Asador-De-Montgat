@@ -329,8 +329,8 @@ const Reservations = ({ triggerToast }) => {
 
   const buildWhatsAppUrl = (isContact = false) => {
     const baseMsg = isContact
-      ? `📩 *MENSAJE WEB - El Asador de Montgat*\n\n👤 *Nombre:* ${form.nombre}\n📧 *Email:* ${form.email}\n💬 *Mensaje:* ${form.comentarios}\n\n_Enviado desde la web_`
-      : `🔥 *NUEVA RESERVA - El Asador de Montgat*\n\n👤 *Nombre:* ${form.nombre}\n📱 *Teléfono:* ${form.telefono}\n📅 *Fecha:* ${form.fecha}\n🕐 *Hora:* ${form.hora}\n👥 *Comensales:* ${form.personas}\n${form.comentarios ? `💬 *Comentarios:* ${form.comentarios}\n` : ""}\n_Enviado desde la web_`;
+      ? `✅ *MENSAJE WEB - El Asador de Montgat*\n\n 🙋 *Nombre:* ${form.nombre}\n 📧 *Email:* ${form.email}\n 📄 *Mensaje:* ${form.comentarios}\n\n_Enviado desde la web_`
+      : `✅ *NUEVA RESERVA - El Asador de Montgat*\n\n🙋 *Nombre:* ${form.nombre}\n📱 *Teléfono:* ${form.telefono}\n 📅 *Fecha:* ${form.fecha}\n 🕒 *Hora:* ${form.hora}\n 👪 *Comensales:* ${form.personas}\n${form.comentarios ? `💬 *Comentarios:* ${form.comentarios}\n` : ""}\n_Enviado desde la web_`;
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(baseMsg)}`;
   };
 
