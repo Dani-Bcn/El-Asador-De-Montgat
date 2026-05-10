@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@gsap/react": "^2.1.2",
     "@tailwindcss/vite": "^4.3.0",
+    "emailjs": "^5.0.0",
     "framer-motion": "^12.38.0",
     "gsap": "^3.15.0",
     "react": "^19.2.5",
