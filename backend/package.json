@@ -1,0 +1,11 @@
+{
+  "name": "restaurant-backend",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "resend": "^6.12.3"
+  }
+}

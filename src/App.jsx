@@ -1,18 +1,13 @@
 // App.jsx
 import React, { useState, useEffect } from "react";
-import emailjs from "@emailjs/browser";
 import "./App.css";
 import Navbar from "./Navbar";
+import { Icon } from "@iconify/react";
 
 // ==================== CONFIGURACIÓN ====================
 const WHATSAPP_NUMBER = "651110553";
-const EMAILJS_PUBLIC_KEY = "TU_PUBLIC_KEY_AQUI";
-const EMAILJS_SERVICE_ID = "TU_SERVICE_ID_AQUI";
-const EMAILJS_TEMPLATE_ID = "TU_TEMPLATE_ID_AQUI";
 
-if (EMAILJS_PUBLIC_KEY !== "TU_PUBLIC_KEY_AQUI") {
-  emailjs.init(EMAILJS_PUBLIC_KEY);
-}
+
 
 // ==================== DATOS ====================
 const menuData = {
@@ -330,18 +325,37 @@ const Reservations = ({ triggerToast }) => {
   const buildWhatsAppUrl = (isContact = false) => {
     const baseMsg = isContact
       ? `✅ *MENSAJE WEB - El Asador de Montgat*\n\n 🙋 *Nombre:* ${form.nombre}\n 📧 *Email:* ${form.email}\n 📄 *Mensaje:* ${form.comentarios}\n\n_Enviado desde la web_`
-      : `✅ *NUEVA RESERVA - El Asador de Montgat*\n\n🙋 *Nombre:* ${form.nombre}\n🌭 *Teléfono:* ${form.telefono}\n 📅 *Fecha:* ${form.fecha}\n 🕒 *Hora:* ${form.hora}\n 👪 *Comensales:* ${form.personas}\n${form.comentarios ? `💬 *Comentarios:* ${form.comentarios}\n` : ""}\n_Enviado desde la web_`;
+      : `✅ *NUEVA RESERVA - El Asador de Montgat*\n\n🙋 *Nombre:* ${form.nombre}\n 📧 *Email:* ${form.email}\n 🌭 *Teléfono:* ${form.telefono}\n 📅 *Fecha:* ${form.fecha}\n 🕒 *Hora:* ${form.hora}\n 👪 *Comensales:* ${form.personas}\n${form.comentarios ? `💬 *Comentarios:* ${form.comentarios}\n` : ""}\n_Enviado desde la web_`;
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(baseMsg)}`;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (method === "whatsapp") {
-      window.open(buildWhatsAppUrl(), "_blank");
-      triggerToast(
-        "¡Redirigiendo a WhatsApp!",
-        "Completa el envío del mensaje en la app.",
-      );
+
+    setLoading(true);
+
+    try {
+      const reservationData = {
+        ...form,
+        fechaReserva: `${form.fecha}T${form.hora}:00`,
+      };
+
+      const response = await fetch("http://localhost:5000/api/reservations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reservationData),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message);
+      }
+
+      triggerToast("Reserva enviada", "Te confirmaremos pronto.");
+
       setForm({
         nombre: "",
         telefono: "",
@@ -351,48 +365,14 @@ const Reservations = ({ triggerToast }) => {
         personas: "",
         comentarios: "",
       });
-    } else {
-      if (EMAILJS_PUBLIC_KEY === "TU_PUBLIC_KEY_AQUI") {
-        window.open(buildWhatsAppUrl(), "_blank");
-        triggerToast(
-          "Email no configurado",
-          "Se redirigió a WhatsApp. Configura EmailJS en el código.",
-        );
-        return;
-      }
-      setLoading(true);
-      try {
-        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          from_name: form.nombre,
-          from_email: form.email,
-          telefono: form.telefono,
-          fecha: form.fecha,
-          hora: form.hora,
-          personas: form.personas,
-          comentarios: form.comentarios || "Sin comentarios",
-        });
-        triggerToast(
-          "¡Reserva enviada por email!",
-          "Te confirmaremos en las próximas horas.",
-        );
-        setForm({
-          nombre: "",
-          telefono: "",
-          email: "",
-          fecha: "",
-          hora: "",
-          personas: "",
-          comentarios: "",
-        });
-      } catch (error) {
-        console.error(error);
-        triggerToast("Error al enviar", "Inténtalo de nuevo o usa WhatsApp.");
-      } finally {
-        setLoading(false);
-      }
+    } catch (error) {
+      console.error(error);
+
+      triggerToast("Error", "No se pudo enviar la reserva");
+    } finally {
+      setLoading(false);
     }
   };
-
   return (
     <section id="reservas" className="relative py-24 md:py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-orange-600/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -458,36 +438,6 @@ const Reservations = ({ triggerToast }) => {
 
           <div className="p-8 md:p-10 rounded-2xl border border-white/10 bg-[#111111]">
             <h3 className="text-xl font-semibold mb-2">Reservar online</h3>
-            <p className="text-sm text-neutral-500 mb-6">
-              Elige cómo quieres recibir tu reserva:
-            </p>
-
-            <div className="flex gap-3 mb-6">
-              <button
-                type="button"
-                onClick={() => setMethod("whatsapp")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium border-2 transition-all ${method === "whatsapp" ? "border-[#25D366] bg-[#25D366]/10 text-[#25D366]" : "border-white/10 text-neutral-500 hover:border-white/20"}`}
-              >
-                <span
-                  className="iconify"
-                  data-icon="mdi:whatsapp"
-                  data-width="20"
-                ></span>
-                WhatsApp
-              </button>
-              <button
-                type="button"
-                onClick={() => setMethod("email")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium border-2 transition-all ${method === "email" ? "border-orange-600 bg-orange-600/10 text-orange-500" : "border-white/10 text-neutral-500 hover:border-white/20"}`}
-              >
-                <span
-                  className="iconify"
-                  data-icon="lucide:mail"
-                  data-width="18"
-                ></span>
-                Email
-              </button>
-            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
@@ -520,7 +470,7 @@ const Reservations = ({ triggerToast }) => {
                   />
                 </div>
               </div>
-              {method === "email" && (
+             
                 <div>
                   <label className="block text-xs text-neutral-500 uppercase tracking-wider mb-2">
                     Email *
@@ -535,7 +485,7 @@ const Reservations = ({ triggerToast }) => {
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-orange-600/50 transition-colors"
                   />
                 </div>
-              )}
+             
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-neutral-500 uppercase tracking-wider mb-2">
@@ -564,9 +514,6 @@ const Reservations = ({ triggerToast }) => {
                   >
                     <option className="text-slate-800" value="">
                       Seleccionar
-                    </option>
-                    <option className="text-slate-800" value="13:00">
-                      13:00
                     </option>
                     <option className="text-slate-800" value="13:00">
                       13:00
@@ -640,37 +587,12 @@ const Reservations = ({ triggerToast }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full font-medium py-3.5 rounded-lg transition-colors flex items-center justify-center gap-2 ${method === "whatsapp" ? "bg-[#25D366] hover:bg-[#128C7E] text-white" : "bg-orange-600 hover:bg-orange-500 text-white"} disabled:opacity-50`}
+                className="w-full font-medium py-3.5 rounded-lg transition-colors flex items-center justify-center gap-2  bg-orange-600/50 cursor-pointer hover:bg-orange-500 text-white disabled:opacity-50"
               >
-                {loading ? (
-                  <>
-                    <div className="spinner"></div> Enviando...
-                  </>
-                ) : method === "whatsapp" ? (
-                  <>
-                    <span
-                      className="iconify"
-                      data-icon="mdi:whatsapp"
-                      data-width="22"
-                    ></span>
-                    Enviar por WhatsApp
-                  </>
-                ) : (
-                  <>
-                    <span
-                      className="iconify"
-                      data-icon="lucide:mail"
-                      data-width="18"
-                    ></span>
-                    Enviar por Email
-                  </>
-                )}
+             
+                Enviar por Email
               </button>
-              <p className="text-[11px] text-neutral-600 text-center">
-                {method === "whatsapp"
-                  ? "Se abrirá WhatsApp con los datos listos para enviar."
-                  : "Recibirás confirmación por email en las próximas horas."}
-              </p>
+               
             </form>
           </div>
         </div>
