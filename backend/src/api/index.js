@@ -4,9 +4,9 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 
-import connectDB from "../src/config/db.js";
+import connectDB from "../config/db.js";
 
-import reservationRoutes from "../src/routes/reservationRoutes.js";
+import reservationRoutes from "../routes/reservationRoutes.js";
 
 
 
