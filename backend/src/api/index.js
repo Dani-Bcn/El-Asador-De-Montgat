@@ -4,9 +4,9 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 
-import connectDB from "../config/db.js";
+import connectDB from "../src/config/db.js";
 
-import reservationRoutes from "../routes/reservationRoutes.js";
+import reservationRoutes from "../src/routes/reservationRoutes.js";
 
 await connectDB();
 
@@ -28,7 +28,7 @@ app.use(express.json());
 |--------------------------------------------------------------------------
 */
 
-app.use("/api/reservations", reservationRoutes);
+app.use("/reservations", reservationRoutes);
 
 /*
 |--------------------------------------------------------------------------
