@@ -10,11 +10,12 @@ const connectDB = async () => {
   try {
     const db = await mongoose.connect(process.env.DB);
 
-    isConnected = db.connections[0].readyState;
+    isConnected = db.connections[0].readyState === 1;
 
     console.log("✅ MongoDB conectado");
   } catch (error) {
     console.error("❌ Error MongoDB:", error);
+    throw error;
   }
 };
 

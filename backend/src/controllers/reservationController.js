@@ -12,7 +12,6 @@ import { sendReservationEmail } from "../services/emailService.js";
 export const createReservation = async (req, res) => {
   try {
     const validationError = validateReservation(req.body);
-      
 
     if (validationError) {
       return res.status(400).json({
@@ -23,14 +22,18 @@ export const createReservation = async (req, res) => {
 
     const reservation = await Reservation.create(req.body);
 
-    res.status(201).json({
+    if (reservation.email) {
+      try {
+        await sendReservationEmail(reservation);
+      } catch (emailErr) {
+        console.error("Error enviando email de reserva:", emailErr);
+      }
+    }
+
+    return res.status(201).json({
       success: true,
       data: reservation,
     });
-    // ENVIAR EMAIL
-     if (reservation.email) {
-      await sendReservationEmail(reservation);
-    } 
   } catch (error) {
     console.error(error);
 
@@ -40,8 +43,6 @@ export const createReservation = async (req, res) => {
     });
   }
 };
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -68,8 +69,6 @@ export const getReservations = async (req, res) => {
   }
 };
 
-
-
 /*
 |--------------------------------------------------------------------------
 | GET ONE
@@ -78,9 +77,7 @@ export const getReservations = async (req, res) => {
 
 export const getReservationById = async (req, res) => {
   try {
-    const reservation = await Reservation.findById(
-      req.params.id,
-    );
+    const reservation = await Reservation.findById(req.params.id);
 
     if (!reservation) {
       return res.status(404).json({
@@ -101,8 +98,6 @@ export const getReservationById = async (req, res) => {
   }
 };
 
-
-
 /*
 |--------------------------------------------------------------------------
 | UPDATE
@@ -111,15 +106,14 @@ export const getReservationById = async (req, res) => {
 
 export const updateReservation = async (req, res) => {
   try {
-    const reservation =
-      await Reservation.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        {
-          new: true,
-          runValidators: true,
-        },
-      );
+    const reservation = await Reservation.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
 
     if (!reservation) {
       return res.status(404).json({
@@ -142,8 +136,6 @@ export const updateReservation = async (req, res) => {
   }
 };
 
-
-
 /*
 |--------------------------------------------------------------------------
 | DELETE
@@ -152,11 +144,7 @@ export const updateReservation = async (req, res) => {
 
 export const deleteReservation = async (req, res) => {
   try {
-    const reservation =
-      await Reservation.findByIdAndDelete(
-        req.params.id,
-      );
-     
+    const reservation = await Reservation.findByIdAndDelete(req.params.id);
 
     if (!reservation) {
       return res.status(404).json({

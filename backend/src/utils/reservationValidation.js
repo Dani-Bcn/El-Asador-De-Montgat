@@ -21,6 +21,10 @@ export const validateReservation = (data) => {
     return "La fecha es obligatoria";
   }
 
+  if (!hora?.trim()) {
+    return "La hora es obligatoria";
+  }
+
   if (!personas) {
     return "Número de personas obligatorio";
   }

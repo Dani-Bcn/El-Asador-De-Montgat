@@ -340,7 +340,8 @@ const Reservations = ({ triggerToast }) => {
         fechaReserva: `${form.fecha}T${form.hora}:00`,
       };
 
-      const response = await fetch("https://el-asador-de-montgat.vercel.app/api/reservations", {
+      const apiBase = import.meta.env.VITE_API_URL ?? "";
+      const response = await fetch(`${apiBase}/api/reservations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
