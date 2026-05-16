@@ -34,6 +34,7 @@ export const createReservation = async (req, res) => {
         emailStatus = {
           sent: false,
           reason: "send_error",
+          detail: emailErr.message,
         };
       }
     }

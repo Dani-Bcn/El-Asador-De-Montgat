@@ -64,7 +64,12 @@ export const sendReservationEmail = async (reservation) => {
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Resend error ${response.status}: ${errorBody}`);
+    return {
+      sent: false,
+      reason: "resend_error",
+      status: response.status,
+      detail: errorBody,
+    };
   }
 
   const data = await response.json();
