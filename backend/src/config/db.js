@@ -8,7 +8,7 @@ const connectDB = async () => {
     return;
   }
 
-  const mongoUri = process.env.DB || process.env.MONGODB_URI;
+  const mongoUri = process.env.DB ;
 
   if (!mongoUri) {
     throw new Error("Falta configurar DB o MONGODB_URI en las variables de entorno");

@@ -15,6 +15,11 @@ const reservationSchema = new mongoose.Schema(
       trim: true,
     },
 
+    fecha: {
+      type: String,
+      trim: true,
+    },
+
     telefono: {
       type: String,
       required: true,

@@ -9,25 +9,27 @@ const padDatePart = (value) => String(value).padStart(2, "0");
 
 const getDateKey = (date) =>
   [
-    date.getFullYear(),
-    padDatePart(date.getMonth() + 1),
-    padDatePart(date.getDate()),
+    date.getUTCFullYear(),
+    padDatePart(date.getUTCMonth() + 1),
+    padDatePart(date.getUTCDate()),
   ].join("-");
 
 const getTimeKey = (date) =>
   [
-    padDatePart(date.getHours()),
-    padDatePart(date.getMinutes()),
+    padDatePart(date.getUTCHours()),
+    padDatePart(date.getUTCMinutes()),
   ].join(":");
 
-const getStartOfDay = (date) => {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  return start;
-};
+const getUtcDayRange = (dateKey) => ({
+  start: new Date(`${dateKey}T00:00:00.000Z`),
+  end: new Date(new Date(`${dateKey}T00:00:00.000Z`).getTime() + DAY_IN_MS),
+});
 
-const getEndOfDay = (date) =>
-  new Date(getStartOfDay(date).getTime() + DAY_IN_MS);
+const addDaysToDateKey = (dateKey, days) => {
+  const date = new Date(`${dateKey}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return getDateKey(date);
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -47,22 +49,31 @@ export const createReservation = async (req, res) => {
     }
 
     const requestedDate = new Date(req.body.fechaReserva);
-    const reservationsForDay = await Reservation.find({
-      fechaReserva: {
-        $gte: getStartOfDay(requestedDate),
-        $lt: getEndOfDay(requestedDate),
-      },
+    const requestedDateKey = req.body.fecha || getDateKey(requestedDate);
+    const requestedDayRange = getUtcDayRange(requestedDateKey);
+
+    req.body.fecha = requestedDateKey;
+
+    const existingReservation = await Reservation.findOne({
+      hora: req.body.hora,
+      $or: [
+        {
+          fecha: requestedDateKey,
+        },
+        {
+          fecha: null,
+          fechaReserva: {
+            $gte: requestedDayRange.start,
+            $lt: requestedDayRange.end,
+          },
+        },
+      ],
       status: {
         $ne: "cancelada",
       },
-    }).select("fechaReserva");
+    }).select("_id");
 
-    const isReservedTime = reservationsForDay.some(
-      (reservation) =>
-        getTimeKey(reservation.fechaReserva) === getTimeKey(requestedDate),
-    );
-
-    if (isReservedTime) {
+    if (existingReservation) {
       return res.status(409).json({
         success: false,
         message: "Esta hora ya está reservada. Elige otra hora.",
@@ -137,30 +148,42 @@ export const getReservations = async (req, res) => {
 export const getReservationAvailability = async (req, res) => {
   try {
     const days = Math.min(Math.max(Number(req.query.days) || 14, 1), 60);
-    const startDate = getStartOfDay(new Date());
-    const endDate = new Date(startDate.getTime() + days * DAY_IN_MS);
+    const startDateKey = getDateKey(new Date());
+    const endDateKey = addDaysToDateKey(startDateKey, days);
+    const startDateRange = getUtcDayRange(startDateKey);
+    const endDateRange = getUtcDayRange(endDateKey);
 
     const reservations = await Reservation.find({
-      fechaReserva: {
-        $gte: startDate,
-        $lt: endDate,
-      },
+      $or: [
+        {
+          fecha: {
+            $gte: startDateKey,
+            $lt: endDateKey,
+          },
+        },
+        {
+          fecha: null,
+          fechaReserva: {
+            $gte: startDateRange.start,
+            $lt: endDateRange.start,
+          },
+        },
+      ],
       status: {
         $ne: "cancelada",
       },
-    }).select("fechaReserva");
+    }).select("fecha fechaReserva hora");
 
     const reservedHoursByDate = reservations.reduce((dates, reservation) => {
-      const dateKey = getDateKey(reservation.fechaReserva);
+      const dateKey = reservation.fecha || getDateKey(reservation.fechaReserva);
       const reservedHours = dates.get(dateKey) || new Set();
-      reservedHours.add(getTimeKey(reservation.fechaReserva));
+      reservedHours.add(reservation.hora || getTimeKey(reservation.fechaReserva));
       dates.set(dateKey, reservedHours);
       return dates;
     }, new Map());
 
     const availability = Array.from({ length: days }, (_, index) => {
-      const date = new Date(startDate.getTime() + index * DAY_IN_MS);
-      const dateKey = getDateKey(date);
+      const dateKey = addDaysToDateKey(startDateKey, index);
       const reservedHours = [...(reservedHoursByDate.get(dateKey) || [])].sort();
 
       return {
