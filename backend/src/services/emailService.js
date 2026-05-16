@@ -1,10 +1,12 @@
-import { Resend } from "resend";
-
-
 export const sendReservationEmail = async (reservation) => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY no configurada. Se omite el email de reserva.");
+    return;
+  }
 
-          
-const resend = new Resend(process.env.RESEND_API_KEY);
+  const { Resend } = await import("resend");
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   const {
     nombre,
     email,

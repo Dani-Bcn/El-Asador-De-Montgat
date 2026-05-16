@@ -3,12 +3,19 @@ import mongoose from "mongoose";
 let isConnected = false;
 
 const connectDB = async () => {
-  if (isConnected) {
+  if (isConnected || mongoose.connection.readyState === 1) {
+    isConnected = true;
     return;
   }
 
+  const mongoUri = process.env.DB || process.env.MONGODB_URI;
+
+  if (!mongoUri) {
+    throw new Error("Falta configurar DB o MONGODB_URI en las variables de entorno");
+  }
+
   try {
-    const db = await mongoose.connect(process.env.DB);
+    const db = await mongoose.connect(mongoUri);
 
     isConnected = db.connections[0].readyState === 1;
 

@@ -4,11 +4,9 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 
-import connectDB from "../src/config/db.js";
+import connectDB from "../config/db.js";
 
-import reservationRoutes from "../src/routes/reservationRoutes.js";
-
-await connectDB();
+import reservationRoutes from "../routes/reservationRoutes.js";
 
 const app = express();
 
@@ -28,7 +26,20 @@ app.use(express.json());
 |--------------------------------------------------------------------------
 */
 
-app.use("/reservations", reservationRoutes);
+app.use("/api/reservations", async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Error conectando MongoDB:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error conectando con la base de datos",
+    });
+  }
+});
+
+app.use("/api/reservations", reservationRoutes);
 
 /*
 |--------------------------------------------------------------------------
