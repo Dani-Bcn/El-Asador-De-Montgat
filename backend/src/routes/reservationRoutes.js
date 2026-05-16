@@ -3,6 +3,7 @@ import express from "express";
 import {
   createReservation,
   getReservations,
+  getReservationAvailability,
   getReservationById,
   updateReservation,
   deleteReservation,
@@ -23,6 +24,8 @@ const router = express.Router();
 router.post("/", createReservation);
 
 router.get("/", getReservations);
+
+router.get("/availability", getReservationAvailability);
 
 router.get("/:id", validateObjectId, getReservationById);
 

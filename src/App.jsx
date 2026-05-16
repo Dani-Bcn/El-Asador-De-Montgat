@@ -1,11 +1,24 @@
 // App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import "./App.css";
 import Navbar from "./Navbar";
 import { Icon } from "@iconify/react";
 
 // ==================== CONFIGURACIÓN ====================
 const WHATSAPP_NUMBER = "651110553";
+const AVAILABILITY_DAYS = 60;
+const RESERVATION_TIME_OPTIONS = [
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "20:30",
+  "21:00",
+  "21:30",
+  "22:00",
+  "22:30",
+];
 
 
 
@@ -307,6 +320,9 @@ const MenuSection = () => {
 const Reservations = ({ triggerToast }) => {
   const [method, setMethod] = useState("whatsapp");
   const [loading, setLoading] = useState(false);
+  const [availability, setAvailability] = useState([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState("");
   const [form, setForm] = useState({
     nombre: "",
     telefono: "",
@@ -317,10 +333,64 @@ const Reservations = ({ triggerToast }) => {
     comentarios: "",
   });
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.id]: e.target.value });
+  const getReservedHoursForDate = (date) =>
+    availability.find((day) => day.fecha === date)?.horasReservadas ?? [];
 
-  const getToday = () => new Date().toISOString().split("T")[0];
+  const selectedReservedHours = getReservedHoursForDate(form.fecha);
+  const isSelectedDateFull =
+    Boolean(form.fecha) &&
+    selectedReservedHours.length >= RESERVATION_TIME_OPTIONS.length;
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+
+    setForm((currentForm) => {
+      const nextForm = { ...currentForm, [id]: value };
+
+      if (id === "fecha" && getReservedHoursForDate(value).includes(nextForm.hora)) {
+        nextForm.hora = "";
+      }
+
+      return nextForm;
+    });
+  };
+
+  const getDateAfterDays = (days) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split("T")[0];
+  };
+
+  const fetchAvailability = useCallback(async () => {
+    setAvailabilityLoading(true);
+    setAvailabilityError("");
+
+    try {
+      const apiBase = import.meta.env.VITE_API_URL ?? "";
+      const response = await fetch(
+        `${apiBase}/api/reservations/availability?days=${AVAILABILITY_DAYS}`,
+      );
+      const data = await response.json().catch(() => ({
+        success: false,
+        message: "Respuesta inválida del servidor",
+      }));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || `Error HTTP ${response.status}`);
+      }
+
+      setAvailability(data.data);
+    } catch (error) {
+      console.error(error);
+      setAvailabilityError("No se pudo cargar la disponibilidad.");
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAvailability();
+  }, [fetchAvailability]);
 
   const buildWhatsAppUrl = (isContact = false) => {
     const baseMsg = isContact
@@ -335,6 +405,10 @@ const Reservations = ({ triggerToast }) => {
     setLoading(true);
 
     try {
+      if (selectedReservedHours.includes(form.hora)) {
+        throw new Error("Esta hora ya está reservada. Elige otra hora.");
+      }
+
       const reservationData = {
         ...form,
         fechaReserva: `${form.fecha}T${form.hora}:00`,
@@ -374,6 +448,7 @@ const Reservations = ({ triggerToast }) => {
         personas: "",
         comentarios: "",
       });
+      fetchAvailability();
     } catch (error) {
       console.error(error);
 
@@ -506,9 +581,15 @@ const Reservations = ({ triggerToast }) => {
                     required
                     value={form.fecha}
                     onChange={handleChange}
-                    min={getToday()}
+                    min={getDateAfterDays(0)}
+                    max={getDateAfterDays(AVAILABILITY_DAYS - 1)}
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-orange-600/50 transition-colors scheme:dark"
                   />
+                  {availabilityError && (
+                    <p className="mt-2 text-xs text-red-400">
+                      {availabilityError}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs text-neutral-500 uppercase tracking-wider mb-2">
@@ -519,42 +600,37 @@ const Reservations = ({ triggerToast }) => {
                     required
                     value={form.hora}
                     onChange={handleChange}
+                    disabled={!form.fecha || availabilityLoading || isSelectedDateFull}
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm  focus:outline-none focus:border-orange-600/50 transition-colors scheme:dark"
                   >
                     <option className="text-slate-800" value="">
-                      Seleccionar
+                      {form.fecha ? "Seleccionar" : "Elige fecha primero"}
                     </option>
-                    <option className="text-slate-800" value="13:00">
-                      13:00
-                    </option>
-                    <option className="text-slate-800" value="13:30">
-                      13:30
-                    </option>
-                    <option className="text-slate-800" value="14:00">
-                      14:00
-                    </option>
-                    <option className="text-slate-800" value="14:30">
-                      14:30
-                    </option>
-                    <option className="text-slate-800" value="15:00">
-                      15:00
-                    </option>
-                    <option className="text-slate-800" value="20:30">
-                      20:30
-                    </option>
-                    <option className="text-slate-800" value="21:00">
-                      21:00
-                    </option>
-                    <option className="text-slate-800" value="21:30">
-                      21:30
-                    </option>
-                    <option className="text-slate-800" value="22:00">
-                      22:00
-                    </option>
-                    <option className="text-slate-800" value="22:30">
-                      22:30
-                    </option>
+                    {RESERVATION_TIME_OPTIONS.map((time) => {
+                      const isReserved = selectedReservedHours.includes(time);
+
+                      return (
+                        <option
+                          className={isReserved ? "text-red-600" : "text-slate-800"}
+                          disabled={isReserved}
+                          key={time}
+                          value={time}
+                        >
+                          {time}
+                          {isReserved ? " - reservada" : ""}
+                        </option>
+                      );
+                    })}
                   </select>
+                  <p className="mt-2 text-xs text-neutral-500">
+                    {availabilityLoading
+                      ? "Comprobando horas reservadas..."
+                      : form.fecha
+                        ? isSelectedDateFull
+                          ? "Todas las horas de este día están reservadas."
+                          : "Las horas reservadas aparecen en rojo y no se pueden elegir."
+                        : "Selecciona una fecha para ver las horas disponibles."}
+                  </p>
                 </div>
               </div>
               <div>

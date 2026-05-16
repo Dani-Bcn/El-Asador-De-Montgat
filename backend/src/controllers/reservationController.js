@@ -3,6 +3,32 @@ import { validateReservation } from "../utils/reservationValidation.js";
 
 import { sendReservationEmail } from "../services/emailService.js";
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const padDatePart = (value) => String(value).padStart(2, "0");
+
+const getDateKey = (date) =>
+  [
+    date.getFullYear(),
+    padDatePart(date.getMonth() + 1),
+    padDatePart(date.getDate()),
+  ].join("-");
+
+const getTimeKey = (date) =>
+  [
+    padDatePart(date.getHours()),
+    padDatePart(date.getMinutes()),
+  ].join(":");
+
+const getStartOfDay = (date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start;
+};
+
+const getEndOfDay = (date) =>
+  new Date(getStartOfDay(date).getTime() + DAY_IN_MS);
+
 /*
 |--------------------------------------------------------------------------
 | CREATE
@@ -17,6 +43,29 @@ export const createReservation = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: validationError,
+      });
+    }
+
+    const requestedDate = new Date(req.body.fechaReserva);
+    const reservationsForDay = await Reservation.find({
+      fechaReserva: {
+        $gte: getStartOfDay(requestedDate),
+        $lt: getEndOfDay(requestedDate),
+      },
+      status: {
+        $ne: "cancelada",
+      },
+    }).select("fechaReserva");
+
+    const isReservedTime = reservationsForDay.some(
+      (reservation) =>
+        getTimeKey(reservation.fechaReserva) === getTimeKey(requestedDate),
+    );
+
+    if (isReservedTime) {
+      return res.status(409).json({
+        success: false,
+        message: "Esta hora ya está reservada. Elige otra hora.",
       });
     }
 
@@ -75,6 +124,63 @@ export const getReservations = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error obteniendo reservas",
+    });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC AVAILABILITY
+|--------------------------------------------------------------------------
+*/
+
+export const getReservationAvailability = async (req, res) => {
+  try {
+    const days = Math.min(Math.max(Number(req.query.days) || 14, 1), 60);
+    const startDate = getStartOfDay(new Date());
+    const endDate = new Date(startDate.getTime() + days * DAY_IN_MS);
+
+    const reservations = await Reservation.find({
+      fechaReserva: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+      status: {
+        $ne: "cancelada",
+      },
+    }).select("fechaReserva");
+
+    const reservedHoursByDate = reservations.reduce((dates, reservation) => {
+      const dateKey = getDateKey(reservation.fechaReserva);
+      const reservedHours = dates.get(dateKey) || new Set();
+      reservedHours.add(getTimeKey(reservation.fechaReserva));
+      dates.set(dateKey, reservedHours);
+      return dates;
+    }, new Map());
+
+    const availability = Array.from({ length: days }, (_, index) => {
+      const date = new Date(startDate.getTime() + index * DAY_IN_MS);
+      const dateKey = getDateKey(date);
+      const reservedHours = [...(reservedHoursByDate.get(dateKey) || [])].sort();
+
+      return {
+        fecha: dateKey,
+        horasReservadas: reservedHours,
+        reservas: reservedHours.length,
+      };
+    });
+
+    res.json({
+      success: true,
+      count: availability.length,
+      data: availability,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Error obteniendo disponibilidad",
     });
   }
 };
