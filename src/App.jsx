@@ -193,7 +193,7 @@ const Hero = () => (
   >
     <div className="absolute inset-0">
       <img
-        src="https://picsum.photos/seed/asador-fire-grill/1920/1080.jpg"
+        src="/barbacoa-lena-carne-brasa.png"
         alt="Asador"
         className="w-full h-full object-cover opacity-50"
       />
@@ -762,7 +762,7 @@ export default function App() {
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-white/5">
                 <img
-                  src="https://picsum.photos/seed/grill-meat-wood/800/600.jpg"
+                  src="/galeria-restaurante-asador.png"
                   alt="Asador"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
                 />
@@ -858,28 +858,28 @@ export default function App() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
               <div className="gallery-item aspect-square rounded-xl overflow-hidden border border-white/5 col-span-2 row-span-2">
                 <img
-                  src="https://picsum.photos/seed/steak-grill-brasa/800/800.jpg"
+                  src="/galeria-carne-brasa.png"
                   alt="Brasa"
                   className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-all duration-500 hover:scale-108 cursor-pointer"
                 />
               </div>
               <div className="gallery-item aspect-square rounded-xl overflow-hidden border border-white/5">
                 <img
-                  src="https://picsum.photos/seed/wine-catalan/400/400.jpg"
+                  src="/galeria-vino-restaurante.png"
                   alt="Vino"
                   className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-all duration-500 hover:scale-108 cursor-pointer"
                 />
               </div>
               <div className="gallery-item aspect-square rounded-xl overflow-hidden border border-white/5">
                 <img
-                  src="https://picsum.photos/seed/grill-embers-fire/400/400.jpg"
+                  src="/galeria-brasas-intensas.png"
                   alt="Brasas"
                   className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-all duration-500 hover:scale-108 cursor-pointer"
                 />
               </div>
               <div className="gallery-item aspect-square rounded-xl overflow-hidden border border-white/5 col-span-2">
                 <img
-                  src="https://picsum.photos/seed/mediterranean-coast/800/400.jpg"
+                  src="/galeria-restaurante-asador.png"
                   alt="Costa"
                   className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-all duration-500 hover:scale-108 cursor-pointer"
                 />
