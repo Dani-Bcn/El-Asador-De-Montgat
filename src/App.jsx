@@ -349,10 +349,13 @@ const Reservations = ({ triggerToast }) => {
         body: JSON.stringify(reservationData),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({
+        success: false,
+        message: "Respuesta inválida del servidor",
+      }));
 
-      if (!data.success) {
-        throw new Error(data.message);
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || `Error HTTP ${response.status}`);
       }
 
       triggerToast("Reserva enviada", "Te confirmaremos pronto.");
@@ -369,7 +372,7 @@ const Reservations = ({ triggerToast }) => {
     } catch (error) {
       console.error(error);
 
-      triggerToast("Error", "No se pudo enviar la reserva");
+      triggerToast("Error", error.message || "No se pudo enviar la reserva");
     } finally {
       setLoading(false);
     }
