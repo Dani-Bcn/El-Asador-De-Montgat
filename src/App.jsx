@@ -358,7 +358,12 @@ const Reservations = ({ triggerToast }) => {
         throw new Error(data.message || `Error HTTP ${response.status}`);
       }
 
-      triggerToast("Reserva enviada", "Te confirmaremos pronto.");
+      triggerToast(
+        "Reserva enviada",
+        data.email?.sent
+          ? "Te confirmaremos pronto."
+          : "Reserva guardada, pero no se pudo enviar el email.",
+      );
 
       setForm({
         nombre: "",
@@ -372,13 +377,13 @@ const Reservations = ({ triggerToast }) => {
     } catch (error) {
       console.error(error);
 
-      triggerToast("Error", error.message || "No se pudo enviar la reserva");
+      triggerToast("Error", error.message || "No se pudo enviar la reserva ,vuelve a intentarlo");
     } finally {
       setLoading(false);
     }
   };
   return (
-    <section id="reservas" className="relative py-24 md:py-32 overflow-hidden">
+    <section id="reservas" className="relative py-26 md:py-32 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-orange-600/5 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">

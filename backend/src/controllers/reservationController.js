@@ -21,18 +21,27 @@ export const createReservation = async (req, res) => {
     }
 
     const reservation = await Reservation.create(req.body);
+    let emailStatus = {
+      sent: false,
+      reason: "without_email",
+    };
 
     if (reservation.email) {
       try {
-        await sendReservationEmail(reservation);
+        emailStatus = await sendReservationEmail(reservation);
       } catch (emailErr) {
         console.error("Error enviando email de reserva:", emailErr);
+        emailStatus = {
+          sent: false,
+          reason: "send_error",
+        };
       }
     }
 
     return res.status(201).json({
       success: true,
       data: reservation,
+      email: emailStatus,
     });
   } catch (error) {
     console.error(error);

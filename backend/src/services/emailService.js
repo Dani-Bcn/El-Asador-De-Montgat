@@ -1,8 +1,13 @@
 export const sendReservationEmail = async (reservation) => {
   if (!process.env.RESEND_API_KEY) {
     console.warn("RESEND_API_KEY no configurada. Se omite el email de reserva.");
-    return;
+    return {
+      sent: false,
+      reason: "missing_api_key",
+    };
   }
+
+  const from = process.env.RESEND_FROM || "Reservas <onboarding@resend.dev>";
 
   const {
     nombre,
@@ -21,7 +26,7 @@ export const sendReservationEmail = async (reservation) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Reservas <onboarding@resend.dev>",
+      from,
       to: email,
       subject: "Reserva recibida - El Asador de Montgat",
 
@@ -62,5 +67,11 @@ export const sendReservationEmail = async (reservation) => {
     throw new Error(`Resend error ${response.status}: ${errorBody}`);
   }
 
-  console.log(await response.json());
+  const data = await response.json();
+  console.log("Email de reserva enviado:", data);
+
+  return {
+    sent: true,
+    id: data.id,
+  };
 };

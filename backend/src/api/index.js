@@ -64,6 +64,7 @@ app.get(["/", "/api", "/api/health", "/health"], (req, res) => {
     env: {
       db: Boolean(process.env.DB || process.env.MONGODB_URI),
       resend: Boolean(process.env.RESEND_API_KEY),
+      resendFrom: Boolean(process.env.RESEND_FROM),
       vercel: process.env.VERCEL === "1",
     },
   });
